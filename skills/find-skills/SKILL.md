@@ -1,11 +1,11 @@
 ---
 name: find-skills
-description: Helps users discover and install agent skills when they ask questions like "how do I do X", "find a skill for X", "is there a skill that can...", or express interest in extending capabilities. This skill should be used when the user is looking for functionality that might exist as an installable skill.
+description: Helps users discover and install agent skills from multiple sources (registered marketplaces, GitHub, skill directories). Use when users ask "how do I do X", "find a skill for X", "is there a skill that can...", or express interest in extending capabilities. Supports searching across registered Claude Code marketplaces, GitHub repositories, and third-party skill directory websites.
 ---
 
 # Find Skills
 
-This skill helps you discover and install skills from the open agent skills ecosystem.
+This skill helps you discover and install skills from the entire agent skills ecosystem — registered Claude Code marketplaces, GitHub, and third-party skill directories.
 
 ## When to Use This Skill
 
@@ -18,90 +18,182 @@ Use this skill when the user:
 - Wants to search for tools, templates, or workflows
 - Mentions they wish they had help with a specific domain (design, testing, deployment, etc.)
 
-## What is the Skills CLI?
+## Skill Ecosystem Overview
 
-The Skills CLI (`npx skills`) is the package manager for the open agent skills ecosystem. Skills are modular packages that extend agent capabilities with specialized knowledge, workflows, and tools.
+Skills exist across multiple sources. Understanding this landscape is key to finding the right skill.
 
-**Key commands:**
+### Category A: Registrable Claude Code Marketplaces
 
-- `npx skills find [query]` - Search for skills interactively or by keyword
-- `npx skills add <package>` - Install a skill from GitHub or other sources
-- `npx skills check` - Check for skill updates
-- `npx skills update` - Update all installed skills
+These are Git repositories containing a `.claude-plugin/marketplace.json` file. They can be registered with `/plugin marketplace add` and then searched/installed via `/plugin` commands.
 
-**Browse skills at:** https://skills.sh/
+| Marketplace | Register Command |
+|-------------|-----------------|
+| Anthropic Official | `/plugin marketplace add anthropics/claude-code` |
+| Vercel Skills | `/plugin marketplace add vercel-labs/skills` |
+| Hugging Face Skills | `/plugin marketplace add huggingface/skills` |
+| ClawHub (OpenClaw) | `/plugin marketplace add openclaw/clawhub` |
+| Tencent SkillHub | `/plugin marketplace add tencent-skillhub/registry` |
 
-## How to Help Users Find Skills
+### Category B: Skill Directory Websites
 
-### Step 1: Understand What They Need
+These websites let you browse skills via web UI. Skills listed on them ultimately point to GitHub repositories. Use WebFetch to search these sites, then install found skills via `npx skills add` (or register the underlying GitHub repo with `/plugin marketplace add` if it's a valid marketplace).
 
-When a user asks for help with something, identify:
+| Directory | URL |
+|-----------|-----|
+| skills.sh | https://skills.sh |
+| SkillsMP | https://skillsmp.com/zh |
+| Killer Skills | https://killer-skills.com/zh |
+| Agentic Skills | https://agenticskills.io |
+| Best Skills | https://bestskills.app |
+| Cocoloop Hub | https://hub.cocoloop.cn/ |
+| Claw Skills | https://clawskills.sh |
+| Awesome OpenClaw (GitHub) | https://github.com/VoltAgent/awesome-openclaw-Skills |
+| Awesome Claude (GitHub) | https://github.com/ComposioHQ/awesome-claude-skills |
 
-1. The domain (e.g., React, testing, design, deployment)
-2. The specific task (e.g., writing tests, creating animations, reviewing PRs)
-3. Whether this is a common enough task that a skill likely exists
+## Search Workflow (Three-Tier Cascade)
 
-### Step 2: Check the Leaderboard First
+**Rule:** Only proceed to the next tier if the current tier yields no relevant results.
 
-Before running a CLI search, check the [skills.sh leaderboard](https://skills.sh/) to see if a well-known skill already exists for the domain. The leaderboard ranks skills by total installs, surfacing the most popular and battle-tested options.
+### Tier 1: Search Registered Marketplaces
 
-For example, top skills for web development include:
-- `vercel-labs/agent-skills` — React, Next.js, web design (100K+ installs each)
-- `anthropics/skills` — Frontend design, document processing (100K+ installs)
+Start here — it's fastest and uses already-configured sources.
 
-### Step 3: Search for Skills
+1. List registered marketplaces:
+   ```bash
+   /plugin marketplace list
+   ```
 
-If the leaderboard doesn't cover the user's need, run the find command:
+2. Search for the skill in registered marketplaces. If the marketplace supports a search command, use it; otherwise browse the marketplace listing.
 
-```bash
-npx skills find [query]
-```
+3. If you find a relevant skill, skip to the Install Workflow.
 
-For example:
+4. If no registered marketplaces exist or no relevant skill is found, proceed to Tier 2.
 
-- User asks "how do I make my React app faster?" → `npx skills find react performance`
-- User asks "can you help me with PR reviews?" → `npx skills find pr review`
-- User asks "I need to create a changelog" → `npx skills find changelog`
+### Tier 2: Register Known Marketplaces + Search GitHub
 
-### Step 4: Verify Quality Before Recommending
+If Tier 1 fails, broaden the search.
 
-**Do not recommend a skill based solely on search results.** Always verify:
+1. **Register Category A marketplaces** the user doesn't have yet:
+   ```bash
+   /plugin marketplace add anthropics/claude-code
+   /plugin marketplace add vercel-labs/skills
+   /plugin marketplace add huggingface/skills
+   /plugin marketplace add openclaw/clawhub
+   /plugin marketplace add tencent-skillhub/registry
+   ```
 
-1. **Install count** — Prefer skills with 1K+ installs. Be cautious with anything under 100.
-2. **Source reputation** — Official sources (`vercel-labs`, `anthropics`, `microsoft`) are more trustworthy than unknown authors.
-3. **GitHub stars** — Check the source repository. A skill from a repo with <100 stars should be treated with skepticism.
+2. Search again in the newly registered marketplaces.
 
-### Step 5: Present Options to the User
+3. **Also search GitHub** in parallel:
+   - Use `gh search repos` to find skill repositories:
+     ```bash
+     gh search repos "SKILL.md <query>" --limit 20
+     ```
+   - Or search by topic:
+     ```bash
+     gh search repos "topic:claude-skills <query>" --limit 20
+     ```
+   - Or use WebSearch: `site:github.com SKILL.md <query>`
 
-When you find relevant skills, present them to the user with:
+4. **Read GitHub README** of any found repos — they often list a marketplace registration URL you can use with `/plugin marketplace add`.
 
-1. The skill name and what it does
-2. The install count and source
-3. The install command they can run
-4. A link to learn more at skills.sh
+5. If you find a relevant skill, register its market (if needed) and skip to the Install Workflow.
 
-Example response:
+6. If still no relevant skill found, proceed to Tier 3.
 
-```
-I found a skill that might help! The "react-best-practices" skill provides
-React and Next.js performance optimization guidelines from Vercel Engineering.
-(185K installs)
+### Tier 3: Search Category B Directory Websites
 
-To install it:
-npx skills add vercel-labs/agent-skills@react-best-practices
+Last resort — crawl skill directory sites.
 
-Learn more: https://skills.sh/vercel-labs/agent-skills/react-best-practices
-```
+1. Use WebFetch to search each Category B site. Start with the most popular ones:
 
-### Step 6: Offer to Install
+   ```
+   WebFetch: https://skills.sh/ → search for <query>
+   WebFetch: https://agenticskills.io → search for <query>
+   WebFetch: https://skillsmp.com/zh → search for <query>
+   ```
 
-If the user wants to proceed, you can install the skill for them:
+2. For GitHub awesome-list directories, read the README directly:
+   ```bash
+   gh repo view ComposioHQ/awesome-claude-skills --json description
+   ```
+   Or use WebFetch on `https://github.com/ComposioHQ/awesome-claude-skills` and `https://github.com/VoltAgent/awesome-openclaw-Skills` to scan the skill list.
+
+3. From search results, identify the skill's GitHub repository (`owner/repo`). The directory site will typically link to it.
+
+4. Try to register the repo as a marketplace:
+   ```bash
+   /plugin marketplace add <owner/repo>
+   ```
+   If it's a valid marketplace, search/install from there. If not, fall back to `npx skills add`.
+
+5. If nothing is found across all tiers, go to "When No Skills Are Found".
+
+## Install Workflow (Two-Tier Cascade)
+
+Once a skill is found, install it using the best available method.
+
+### Tier 1: Install via /plugin (Preferred)
+
+Claude Code's `/plugin` system provides the best integration — skill updates, dependency management, and auto-loading.
+
+1. **Ensure the marketplace is registered:**
+   ```bash
+   /plugin marketplace add <owner/repo>
+   ```
+
+2. **Install the skill from the marketplace:**
+   ```bash
+   /plugin install <skill-name>@<marketplace-name>
+   ```
+
+3. Verify installation — the skill should appear in the user's available skills list.
+
+### Tier 2: Install via npx skills (Fallback)
+
+Use this when the skill's source is not a valid Claude Code marketplace (no `.claude-plugin/marketplace.json`).
 
 ```bash
 npx skills add <owner/repo@skill> -g -y
 ```
 
-The `-g` flag installs globally (user-level) and `-y` skips confirmation prompts.
+Flags:
+- `-g` — install globally (user-level)
+- `-y` — skip confirmation prompts
+
+### Presenting Installation to the User
+
+When recommending a skill, always present the best installation method first:
+
+```
+I found a skill that matches your need!
+
+**Skill:** <name> — <description>
+**Source:** <owner/repo> (<installs> installs)
+
+To install (recommended):
+  /plugin marketplace add <owner/repo>
+  /plugin install <skill>@<marketplace>
+
+Or via npx:
+  npx skills add <owner/repo@skill> -g -y
+```
+
+## Quality Verification
+
+**Do not recommend a skill based solely on search results.** Always verify:
+
+1. **Install count** — Prefer skills with 1K+ installs. Be cautious with anything under 100.
+2. **Source reputation** — Official sources (`anthropics`, `vercel-labs`, `huggingface`, `microsoft`, `openclaw`) are more trustworthy than unknown authors.
+3. **GitHub stars** — Check the source repository. A skill from a repo with <50 stars should be treated with skepticism.
+4. **Has marketplace.json?** — Prefer skills that support `/plugin` installation (have `.claude-plugin/marketplace.json`). This indicates the author follows Claude Code ecosystem conventions.
+5. **Recency** — Check last commit date. Skills unmaintained for >1 year may have compatibility issues.
+
+### How to Verify
+
+- For GitHub repos: `gh repo view <owner/repo> --json stargazersCount,updatedAt,description`
+- For marketplace skills: Check the marketplace listing for install counts and ratings
+- Read the skill's SKILL.md to understand what it actually does before recommending
 
 ## Common Skill Categories
 
@@ -117,15 +209,19 @@ When searching, consider these common categories:
 | Design          | ui, ux, design-system, accessibility     |
 | Productivity    | workflow, automation, git                |
 
-## Tips for Effective Searches
+## Tips for Effective Multi-Source Searches
 
 1. **Use specific keywords**: "react testing" is better than just "testing"
 2. **Try alternative terms**: If "deploy" doesn't work, try "deployment" or "ci-cd"
-3. **Check popular sources**: Many skills come from `vercel-labs/agent-skills` or `ComposioHQ/awesome-claude-skills`
+3. **Check marketplace first**: Always start with `/plugin marketplace list` — it's the fastest path
+4. **Register markets proactively**: If you haven't registered the Category A markets, do it — they cover 80%+ of available skills
+5. **GitHub is your fallback**: `gh search repos "SKILL.md <topic>"` catches skills not listed on any directory
+6. **Read before recommending**: Always read the skill's SKILL.md or README to understand what it does
+7. **Prefer /plugin install**: It gives the user automatic updates and better integration
 
 ## When No Skills Are Found
 
-If no relevant skills exist:
+If no relevant skills exist after searching all tiers:
 
 1. Acknowledge that no existing skill was found
 2. Offer to help with the task directly using your general capabilities
@@ -134,9 +230,11 @@ If no relevant skills exist:
 Example:
 
 ```
-I searched for skills related to "xyz" but didn't find any matches.
-I can still help you with this task directly! Would you like me to proceed?
+I searched across registered marketplaces, GitHub, and skill directories
+for "xyz" but didn't find any matches. I can still help you with this task
+directly! Would you like me to proceed?
 
 If this is something you do often, you could create your own skill:
-npx skills init my-xyz-skill
+  npx skills init my-xyz-skill
+  /plugin marketplace add <your-repo>  # after pushing to GitHub
 ```
