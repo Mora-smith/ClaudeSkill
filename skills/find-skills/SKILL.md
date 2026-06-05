@@ -59,11 +59,18 @@ These websites let you browse skills via web UI. Skills listed on them ultimatel
 Start here — it's fastest and uses already-configured sources.
 
 1. List registered marketplaces:
-   ```bash
+   ```
    /plugin marketplace list
    ```
 
-2. Search for the skill in registered marketplaces. If the marketplace supports a search command, use it; otherwise browse the marketplace listing.
+2. Search for the skill in registered marketplaces:
+   ```
+   /plugin search <query>
+   ```
+   Or browse a specific marketplace:
+   ```
+   /plugin browse <marketplace-name>
+   ```
 
 3. If you find a relevant skill, skip to the Install Workflow.
 
@@ -74,7 +81,7 @@ Start here — it's fastest and uses already-configured sources.
 If Tier 1 fails, broaden the search.
 
 1. **Register Category A marketplaces** the user doesn't have yet:
-   ```bash
+   ```
    /plugin marketplace add anthropics/claude-code
    /plugin marketplace add vercel-labs/skills
    /plugin marketplace add huggingface/skills
@@ -107,22 +114,20 @@ Last resort — crawl skill directory sites.
 
 1. Use WebFetch to search each Category B site. Start with the most popular ones:
 
-   ```
-   WebFetch: https://skills.sh/ → search for <query>
-   WebFetch: https://agenticskills.io → search for <query>
-   WebFetch: https://skillsmp.com/zh → search for <query>
-   ```
+   - Fetch each directory's homepage with WebFetch and ask it to search for the skill:
+     - `WebFetch: https://skills.sh → prompt: "search for <query> skills"`
+     - `WebFetch: https://agenticskills.io → prompt: "search for <query>"`
+     - `WebFetch: https://skillsmp.com/zh → prompt: "search for <query>"`
+   - If you know the site's search URL pattern, construct it directly (e.g., `https://skills.sh/search?q=<query>`).
 
-2. For GitHub awesome-list directories, read the README directly:
-   ```bash
-   gh repo view ComposioHQ/awesome-claude-skills --json description
-   ```
-   Or use WebFetch on `https://github.com/ComposioHQ/awesome-claude-skills` and `https://github.com/VoltAgent/awesome-openclaw-Skills` to scan the skill list.
+2. For GitHub awesome-list directories, use WebFetch to read the README directly:
+   - `WebFetch: https://github.com/ComposioHQ/awesome-claude-skills → prompt: "list all skills mentioned in this README"`
+   - `WebFetch: https://github.com/VoltAgent/awesome-openclaw-Skills → prompt: "list all skills mentioned in this README"`
 
 3. From search results, identify the skill's GitHub repository (`owner/repo`). The directory site will typically link to it.
 
 4. Try to register the repo as a marketplace:
-   ```bash
+   ```
    /plugin marketplace add <owner/repo>
    ```
    If it's a valid marketplace, search/install from there. If not, fall back to `npx skills add`.
@@ -138,12 +143,12 @@ Once a skill is found, install it using the best available method.
 Claude Code's `/plugin` system provides the best integration — skill updates, dependency management, and auto-loading.
 
 1. **Ensure the marketplace is registered:**
-   ```bash
+   ```
    /plugin marketplace add <owner/repo>
    ```
 
 2. **Install the skill from the marketplace:**
-   ```bash
+   ```
    /plugin install <skill-name>@<marketplace-name>
    ```
 
