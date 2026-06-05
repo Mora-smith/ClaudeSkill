@@ -1,0 +1,22 @@
+{
+  "name": "mora-smith-skills",
+  "owner": {
+    "name": "Mora-smith",
+    "email": ""
+  },
+  "metadata": {
+    "description": "个人 Claude Code 技能集合 — Personal Claude Code skill collection",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "find-skills",
+      "description": "Discover and install agent skills from the open ecosystem. Use when users ask 'how do I do X', 'find a skill for X', 'is there a skill that can...', or want to extend agent capabilities.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/find-skills"
+      ]
+    }
+  ]
+}
